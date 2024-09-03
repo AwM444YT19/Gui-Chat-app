@@ -24,6 +24,7 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             padding: 20px;
             box-sizing: border-box;
+            position: relative;
         }
         .profile-picture {
             text-align: center;
@@ -36,6 +37,7 @@
             object-fit: cover;
             border: 2px solid #ddd;
             margin-bottom: 10px;
+            display: inline-block;
         }
         .profile-picture input[type="file"] {
             display: none;
@@ -48,10 +50,51 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
-            transition: background-color 0.3s;
+            transition: all 100ms linear;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
         .profile-picture button:hover {
             background-color: #1ebe5e;
+        }
+        .profile-picture button::before {
+            content: "";
+            width: 100%;
+            height: 100%;
+            background-color: #fff;
+            position: absolute;
+            border-radius: inherit;
+            z-index: -1;
+            top: 0;
+            left: 0;
+            transition: all 500ms ease-in-out;
+            opacity: 0;
+            animation: flash 100ms ease-in-out;
+            transform: scaleX(2) scaleY(2);
+        }
+        .profile-picture button:hover::before {
+            opacity: 1;
+            transform: scaleX(1) scaleY(1);
+        }
+        @keyframes flash {
+            0% {
+                opacity: 1;
+                transform: translate(45px);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(0);
+            }
+        }
+        .profile-picture .remove-photo {
+            display: block;
+            margin-top: 10px;
+            color: #f44336;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            background: none;
         }
         .form-group {
             margin-bottom: 15px;
@@ -132,9 +175,10 @@
 <body>
     <div class="container">
         <div class="profile-picture">
-            <img id="profile-image" src="https://i.imghippo.com/files/ShB8h1725286261.jpg" alt="Profile Picture">
+            <img id="profile-image" src="" alt="Profile Picture">
             <input type="file" id="upload">
             <button onclick="document.getElementById('upload').click()">Upload Picture</button>
+            <button class="remove-photo" id="remove-photo">🗑️ Remove Photo</button>
         </div>
         <div class="form-group">
             <label for="name">Name</label>
@@ -162,39 +206,50 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <script>
-        document.getElementById('upload').addEventListener('change', function (event) {
+        const profileImage = document.getElementById('profile-image');
+        const uploadInput = document.getElementById('upload');
+        const cropperContainer = document.getElementById('cropper-container');
+        const cropperImage = document.getElementById('cropper-image');
+        const cropConfirmButton = document.getElementById('crop-confirm');
+        const cropCancelButton = document.getElementById('crop-cancel');
+        const removePhotoButton = document.getElementById('remove-photo');
+        let cropper;
+
+        uploadInput.addEventListener('change', function (event) {
             const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function (e) {
-                    const image = document.getElementById('cropper-image');
-                    image.src = e.target.result;
-                    document.getElementById('cropper-container').style.display = 'block';
-
-                    const cropper = new Cropper(image, {
+                    cropperImage.src = e.target.result;
+                    cropperContainer.style.display = 'block';
+                    cropper = new Cropper(cropperImage, {
                         aspectRatio: 1,
                         viewMode: 1,
                         zoomable: false,
                         movable: false,
                         rotatable: false
                     });
-
-                    document.getElementById('crop-confirm').addEventListener('click', function () {
-                        const canvas = cropper.getCroppedCanvas({
-                            width: 150,
-                            height: 150
-                        });
-                        document.getElementById('profile-image').src = canvas.toDataURL();
-                        document.getElementById('cropper-container').style.display = 'none';
-                    });
-
-                    document.getElementById('crop-cancel').addEventListener('click', function () {
-                        document.getElementById('cropper-container').style.display = 'none';
-                    });
                 };
                 reader.readAsDataURL(file);
             }
         });
+
+        cropConfirmButton.addEventListener('click', function () {
+            const canvas = cropper.getCroppedCanvas({
+                width: 150,
+                height: 150
+            });
+            profileImage.src = canvas.toDataURL('image/jpeg', 1); // Ensure high quality
+            cropperContainer.style.display = 'none';
+        });
+
+        cropCancelButton.addEventListener('click', function () {
+            cropperContainer.style.display = 'none';
+        });
+
+        removePhotoButton.addEventListener('click', function () {
+            profileImage.src = '';
+        });
     </script>
 </body>
-</html>
+                </html>
